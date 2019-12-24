@@ -124,7 +124,10 @@ public:
                                     imu.header.stamp = measurement_time;
                                     imu.header.frame_id = _frame_id;
 
-                                    //imu.orientation = differential_rotation;
+                                    imu.orientation.x = differential_rotation.getX();
+                                    imu.orientation.y = differential_rotation.getY();
+                                    imu.orientation.z = differential_rotation.getZ();
+                                    imu.orientation.w = differential_rotation.getW();
 
                                     imu.angular_velocity.x = gxf;
                                     imu.angular_velocity.y = gyf;

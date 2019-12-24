@@ -20,7 +20,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(Boost COMPONENTS system thread filesystem)
 
-add_executable(mpu6050_imu_node src/node.cpp)
+add_executable(mpu6050_imu_node src/mpu6050_serial_to_imu_node.cpp)
 ament_target_dependencies(mpu6050_imu_node serial rclcpp std_msgs sensor_msgs geometry_msgs tf2 tf2_ros)
 
 install(TARGETS

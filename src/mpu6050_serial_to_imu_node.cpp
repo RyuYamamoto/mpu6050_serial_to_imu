@@ -11,27 +11,30 @@ class MPU6050_IMU
 {
 public:
     MPU6050_IMU(rclcpp::Node::SharedPtr node) : 
-        _node(node)
+        _node(node),
+        _rate(200),
+        _time_offset_in_seconds(0.0),
+        _broadcast_tf(true),
+        _linear_acceleration_stddev(0.0),
+        _angular_velocity_stddev(0.0),
+        _orientation_stddev(0.0),
+        _zero_orientation_set(false)
     {
         _imu_pub = _node->create_publisher<sensor_msgs::msg::Imu>("imu/data", 50);
 
-        _port = "/dev/ttyUSB0";
-        _tf_parent_frame_id = "imu_base";
-        _tf_frame_id = "imu_link";
-        _frame_id ="imu_link";
-        _time_offset_in_seconds = 0.0;
-        _broadcast_tf = true;
-        _linear_acceleration_stddev = 0.0;
-        _angular_velocity_stddev = 0.0;
-        _orientation_stddev = 0.0;
-
-        _zero_orientation_set = false;
+        // ros2 parameter
+        _node->declare_parameter("port", "/dev/ttyUSB0");
+        _node->get_parameter("port", _port);
+        _node->declare_parameter("tf_parent_frame_id", "imu_base");
+        _node->get_parameter("tf_parent_frame_id", _tf_parent_frame_id);
+        _node->declare_parameter("tf_frame_id", "imu_link");
+        _node->get_parameter("tf_frame_id", _tf_frame_id);
+        _node->declare_parameter("frame_id", "imu_link");
+        _node->get_parameter("frame_id", _frame_id);
     }
     void run()
     {
-        rclcpp::WallRate rate(200);
         sensor_msgs::msg::Imu imu;
-
         imu.linear_acceleration_covariance[0] = _linear_acceleration_stddev;
         imu.linear_acceleration_covariance[4] = _linear_acceleration_stddev;
         imu.linear_acceleration_covariance[8] = _linear_acceleration_stddev;
@@ -44,9 +47,7 @@ public:
         imu.orientation_covariance[4] = _orientation_stddev;
         imu.orientation_covariance[8] = _orientation_stddev;
         
-        tf2::Quaternion orientation;
         tf2::Quaternion zero_orientation;
-
         std::string input, read;
         while(rclcpp::ok())
         {
@@ -84,8 +85,7 @@ public:
                                         _zero_orientation_set = true;
                                     }
 
-                                    tf2::Quaternion differential_rotation;
-                                    differential_rotation = zero_orientation.inverse() * orientation;
+                                    tf2::Quaternion differential_rotation = zero_orientation.inverse() * orientation;
 
                                     int16_t gx = (((0xff &(char)input[_data_packet_start + 10]) << 8) | 0xff &(char)input[_data_packet_start + 11]);
                                     int16_t gy = (((0xff &(char)input[_data_packet_start + 12]) << 8) | 0xff &(char)input[_data_packet_start + 13]);
@@ -170,14 +170,12 @@ public:
                     }
                     catch(serial::IOException& e)
                     {
-                        //RCLCPP_ERROR("Unable to open serial port");
-                        std::cout << "unable to open" << std::endl;
+                        RCLCPP_ERROR(_node->get_logger(), "Unable to open serial port");
                         rclcpp::Rate(5).sleep();
                     }
 
                     if(_ser.isOpen())
                     {
-                        std::cout << "Open" << std::endl;
                         RCLCPP_DEBUG(_node->get_logger(), "Serial port initialzed and opened.");
                     }
                 }
@@ -187,12 +185,13 @@ public:
                 RCLCPP_ERROR(_node->get_logger(), "Error reading from the serial port");
                 _ser.close();
             }
-            rate.sleep();
+            _rate.sleep();
         }
     }
 private:
     rclcpp::Node::SharedPtr _node;
     rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr _imu_pub;
+    rclcpp::WallRate _rate;
 
     serial::Serial _ser;
     std::string _port;

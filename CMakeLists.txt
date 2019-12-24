@@ -1,71 +1,30 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(mpu6050_serial_to_imu)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  geometry_msgs
-  sensor_msgs
-  serial
-  std_msgs
-  std_srvs
-  tf
-)
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if you package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES mpu6050_serial_to_imu
-  CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs serial std_msgs std_srvs tf
-#  DEPENDS system_lib
-)
+find_package(ament_cmake REQUIRED)
+find_package(serial REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(Boost COMPONENTS system thread filesystem)
 
-###########
-## Build ##
-###########
+add_executable(mpu6050_imu_node src/node.cpp)
+ament_target_dependencies(mpu6050_imu_node serial rclcpp std_msgs sensor_msgs geometry_msgs tf2 tf2_ros)
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-# include_directories(include)
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
+install(TARGETS
+  mpu6050_imu_node
+  DESTINATION lib/${PROJECT_NAME})
 
-## Declare a C++ executable
-add_executable(mpu6050_serial_to_imu_node src/mpu6050_serial_to_imu_node.cpp)
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(mpu6050_serial_to_imu_node
-  ${catkin_LIBRARIES}
-)
-
-#############
-## Install ##
-#############
-
-
-## Mark executables and/or libraries for installation
-install(TARGETS mpu6050_serial_to_imu_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install (DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-
-install (DIRECTORY rviz
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+ament_package()

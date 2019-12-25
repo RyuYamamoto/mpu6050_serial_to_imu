@@ -31,6 +31,7 @@ public:
         _node->get_parameter("tf_frame_id", _tf_frame_id);
         _node->declare_parameter("frame_id", "imu_link");
         _node->get_parameter("frame_id", _frame_id);
+
     }
     void run()
     {
@@ -188,6 +189,7 @@ public:
                 RCLCPP_ERROR(_node->get_logger(), "Error reading from the serial port");
                 _ser.close();
             }
+            rclcpp::spin_some(_node);
             _rate.sleep();
         }
     }
